@@ -1,6 +1,7 @@
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { subDays, startOfDay, format, differenceInDays } from 'date-fns';
+import { useMemo } from 'react';
 
 interface WordEntry {
   id: number;
@@ -22,44 +23,60 @@ export default function WritingStreak({ entries }: WritingStreakProps) {
   const today = new Date();
   const startDate = subDays(today, 365);
 
-  // Process entries into a format suitable for the heatmap
-  const entryMap = new Map<string, number>();
-  entries.forEach(entry => {
-    const dateStr = format(new Date(entry.date), 'yyyy-MM-dd');
-    entryMap.set(dateStr, (entryMap.get(dateStr) || 0) + entry.word_count);
-  });
-
-  // Create values array for the heatmap
-  const values: HeatmapValue[] = [];
-  let currentDate = startDate;
-  while (differenceInDays(today, currentDate) >= 0) {
-    const dateStr = format(currentDate, 'yyyy-MM-dd');
-    const count = entryMap.get(dateStr) || 0;
-    values.push({
-      date: currentDate,
-      count,
+  const entryMap = useMemo(() => {
+    const map = new Map<string, number>();
+    entries.forEach(entry => {
+      const dateStr = format(new Date(entry.date), 'yyyy-MM-dd');
+      map.set(dateStr, (map.get(dateStr) || 0) + entry.word_count);
     });
-    currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
-  }
+    return map;
+  }, [entries]);
 
-  // Calculate current streak
-  let currentStreak = 0;
-  let date = today;
-  while (true) {
-    const dateStr = format(startOfDay(date), 'yyyy-MM-dd');
-    if (!entryMap.has(dateStr)) break;
-    currentStreak++;
-    date = subDays(date, 1);
-  }
+  const values = useMemo((): HeatmapValue[] => {
+    const result: HeatmapValue[] = [];
+    const totalDays = differenceInDays(today, startDate) + 1;
+    
+    for (let i = 0; i < totalDays; i++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + i);
+      const dateStr = format(currentDate, 'yyyy-MM-dd');
+      const count = entryMap.get(dateStr) || 0;
+      
+      result.push({
+        date: new Date(currentDate),
+        count,
+      });
+    }
+    
+    return result;
+  }, [entryMap, today, startDate]);
 
-  // Calculate longest streak
-  let longestStreak = 0;
-  let currentRun = 0;
-  let previousDate: Date | null = null;
+  const currentStreak = useMemo(() => {
+    let streak = 0;
+    let date = new Date(today);
+    
+    while (true) {
+      const dateStr = format(startOfDay(date), 'yyyy-MM-dd');
+      if (!entryMap.has(dateStr)) break;
+      streak++;
+      date = subDays(date, 1);
+    }
+    
+    return streak;
+  }, [entryMap, today]);
 
-  entries
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .forEach(entry => {
+  const longestStreak = useMemo(() => {
+    if (entries.length === 0) return 0;
+    
+    const sortedEntries = [...entries].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    
+    let maxStreak = 0;
+    let currentRun = 0;
+    let previousDate: Date | null = null;
+
+    sortedEntries.forEach(entry => {
       const entryDate = startOfDay(new Date(entry.date));
       
       if (previousDate) {
@@ -67,7 +84,7 @@ export default function WritingStreak({ entries }: WritingStreakProps) {
         if (dayDiff === 1) {
           currentRun++;
         } else {
-          longestStreak = Math.max(longestStreak, currentRun);
+          maxStreak = Math.max(maxStreak, currentRun);
           currentRun = 1;
         }
       } else {
@@ -76,8 +93,9 @@ export default function WritingStreak({ entries }: WritingStreakProps) {
       
       previousDate = entryDate;
     });
-  
-  longestStreak = Math.max(longestStreak, currentRun);
+    
+    return Math.max(maxStreak, currentRun);
+  }, [entries]);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
