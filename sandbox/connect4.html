@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect 4 Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%);
+            padding: 20px;
+        }
+
+        .game-container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            margin: 0 0 30px 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+        }
+
+        .game-info {
+            margin: 25px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(78, 205, 196, 0.1));
+            border-radius: 15px;
+            border: 2px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .current-player {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            color: #2c3e50;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .player-red {
+            color: #ff6b6b;
+        }
+
+        .player-yellow {
+            color: #ffd93d;
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+            gap: 8px;
+        }
+
+        .drop-button {
+            width: 70px;
+            height: 40px;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 14px;
+        }
+
+        .drop-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+            background: linear-gradient(135deg, #4ecdc4, #ff6b6b);
+        }
+
+        .drop-button:active {
+            transform: translateY(0);
+        }
+
+        .drop-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .connect4-board {
+            display: grid;
+            grid-template-columns: repeat(7, 70px);
+            grid-template-rows: repeat(6, 70px);
+            gap: 8px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            padding: 20px;
+            border-radius: 20px;
+            margin: 25px auto;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            justify-content: center;
+        }
+
+        .connect4-board::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #ff6b6b);
+            background-size: 200% 200%;
+            animation: shimmer 3s ease-in-out infinite;
+            border-radius: 20px;
+            z-index: -1;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .cell {
+            width: 70px;
+            height: 70px;
+            background: #ecf0f1;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cell.red {
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            animation: drop-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .cell.yellow {
+            background: linear-gradient(135deg, #ffd93d, #ffcd02);
+            box-shadow: 0 5px 15px rgba(255, 217, 61, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            animation: drop-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .cell.winning {
+            animation: winning-pulse 1s infinite;
+        }
+
+        @keyframes drop-in {
+            0% {
+                transform: translateY(-200px) scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(10px) scale(1.1);
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes winning-pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6), inset 0 4px 8px rgba(255, 255, 255, 0.4);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 12px 35px rgba(255, 215, 0, 0.8), inset 0 6px 12px rgba(255, 255, 255, 0.6);
+            }
+        }
+
+        .game-status {
+            margin: 25px 0;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-status.winner {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(78, 205, 196, 0.1));
+            border: 2px solid rgba(255, 107, 107, 0.3);
+            animation: celebration 2s ease-in-out infinite;
+        }
+
+        .game-status.draw {
+            background: linear-gradient(135deg, rgba(108, 117, 125, 0.1), rgba(73, 80, 87, 0.1));
+            border: 2px solid rgba(108, 117, 125, 0.3);
+        }
+
+        @keyframes celebration {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .reset-button {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+            margin-top: 20px;
+        }
+
+        .reset-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+            background: linear-gradient(135deg, #4ecdc4, #ff6b6b);
+        }
+
+        .reset-button:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(255, 107, 107, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .connect4-board {
+                grid-template-columns: repeat(7, 50px);
+                grid-template-rows: repeat(6, 50px);
+                gap: 6px;
+                padding: 15px;
+            }
+
+            .cell {
+                width: 50px;
+                height: 50px;
+            }
+
+            .drop-button {
+                width: 50px;
+                height: 35px;
+                font-size: 12px;
+            }
+
+            .current-player {
+                font-size: 1.2rem;
+            }
+
+            .game-status {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Connect 4 Master</h1>
+        <div class="game-info">
+            <div class="current-player" id="current-player">Current Player: Red</div>
+        </div>
+
+        <div class="column-header" id="column-header">
+            <button class="drop-button" onclick="dropPiece(0)">↓</button>
+            <button class="drop-button" onclick="dropPiece(1)">↓</button>
+            <button class="drop-button" onclick="dropPiece(2)">↓</button>
+            <button class="drop-button" onclick="dropPiece(3)">↓</button>
+            <button class="drop-button" onclick="dropPiece(4)">↓</button>
+            <button class="drop-button" onclick="dropPiece(5)">↓</button>
+            <button class="drop-button" onclick="dropPiece(6)">↓</button>
+        </div>
+
+        <div class="connect4-board" id="connect4-board"></div>
+
+        <div class="game-status" id="game-status"></div>
+
+        <button class="reset-button" onclick="initializeGame()">New Game</button>
+    </div>
+
+    <script>
+        let gameState = {
+            board: [],
+            currentPlayer: 'red',
+            gameOver: false,
+            winner: null,
+            winningCells: []
+        };
+
+        function initializeGame() {
+            gameState.board = Array(6).fill().map(() => Array(7).fill(''));
+            gameState.currentPlayer = 'red';
+            gameState.gameOver = false;
+            gameState.winner = null;
+            gameState.winningCells = [];
+            createBoard();
+            updateDisplay();
+            updateDropButtons();
+        }
+
+        function createBoard() {
+            const board = document.getElementById('connect4-board');
+            board.innerHTML = '';
+
+            for (let row = 0; row < 6; row++) {
+                for (let col = 0; col < 7; col++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+
+                    const piece = gameState.board[row][col];
+                    if (piece) {
+                        cell.classList.add(piece);
+                    }
+
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function dropPiece(col) {
+            if (gameState.gameOver) return;
+
+            for (let row = 5; row >= 0; row--) {
+                if (gameState.board[row][col] === '') {
+                    gameState.board[row][col] = gameState.currentPlayer;
+
+                    setTimeout(() => {
+                        const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                        cell.classList.add(gameState.currentPlayer);
+                    }, 100);
+
+                    if (checkWin(row, col)) {
+                        gameState.gameOver = true;
+                        gameState.winner = gameState.currentPlayer;
+                        setTimeout(() => {
+                            highlightWinningCells();
+                            updateDisplay();
+                        }, 600);
+                    } else if (isBoardFull()) {
+                        gameState.gameOver = true;
+                        setTimeout(() => {
+                            updateDisplay();
+                        }, 600);
+                    } else {
+                        switchPlayer();
+                        updateDisplay();
+                    }
+
+                    updateDropButtons();
+                    return;
+                }
+            }
+        }
+
+        function switchPlayer() {
+            gameState.currentPlayer = gameState.currentPlayer === 'red' ? 'yellow' : 'red';
+        }
+
+        function checkWin(row, col) {
+            const player = gameState.currentPlayer;
+            const directions = [
+                [0, 1],   // horizontal
+                [1, 0],   // vertical
+                [1, 1],   // diagonal \
+                [1, -1]   // diagonal /
+            ];
+
+            for (let [deltaRow, deltaCol] of directions) {
+                const winningSequence = getWinningSequence(row, col, deltaRow, deltaCol, player);
+                if (winningSequence.length >= 4) {
+                    gameState.winningCells = winningSequence;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function getWinningSequence(row, col, deltaRow, deltaCol, player) {
+            let sequence = [[row, col]];
+
+            // Check positive direction
+            let r = row + deltaRow;
+            let c = col + deltaCol;
+            while (r >= 0 && r < 6 && c >= 0 && c < 7 && gameState.board[r][c] === player) {
+                sequence.push([r, c]);
+                r += deltaRow;
+                c += deltaCol;
+            }
+
+            // Check negative direction
+            r = row - deltaRow;
+            c = col - deltaCol;
+            while (r >= 0 && r < 6 && c >= 0 && c < 7 && gameState.board[r][c] === player) {
+                sequence.unshift([r, c]);
+                r -= deltaRow;
+                c -= deltaCol;
+            }
+
+            return sequence;
+        }
+
+        function highlightWinningCells() {
+            gameState.winningCells.forEach(([row, col]) => {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                cell.classList.add('winning');
+            });
+        }
+
+        function isBoardFull() {
+            return gameState.board[0].every(cell => cell !== '');
+        }
+
+        function updateDisplay() {
+            const currentPlayerElement = document.getElementById('current-player');
+            const gameStatusElement = document.getElementById('game-status');
+
+            if (gameState.gameOver) {
+                currentPlayerElement.style.display = 'none';
+
+                if (gameState.winner) {
+                    const winnerName = gameState.winner.charAt(0).toUpperCase() + gameState.winner.slice(1);
+                    gameStatusElement.textContent = `🎉 ${winnerName} Wins! 🎉`;
+                    gameStatusElement.className = 'game-status winner';
+                } else {
+                    gameStatusElement.textContent = `🤝 It's a Draw! 🤝`;
+                    gameStatusElement.className = 'game-status draw';
+                }
+            } else {
+                currentPlayerElement.style.display = 'block';
+                const playerName = gameState.currentPlayer.charAt(0).toUpperCase() + gameState.currentPlayer.slice(1);
+                currentPlayerElement.textContent = `Current Player: ${playerName}`;
+                currentPlayerElement.className = `current-player player-${gameState.currentPlayer}`;
+                gameStatusElement.textContent = '';
+                gameStatusElement.className = 'game-status';
+            }
+        }
+
+        function updateDropButtons() {
+            const buttons = document.querySelectorAll('.drop-button');
+            buttons.forEach((button, col) => {
+                const isColumnFull = gameState.board[0][col] !== '';
+                button.disabled = isColumnFull || gameState.gameOver;
+            });
+        }
+
+        // Initialize the game
+        initializeGame();
+    </script>
+</body>
+</html>

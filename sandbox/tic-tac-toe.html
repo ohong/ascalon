@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .game-container {
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 2px;
+            margin: 2rem auto;
+            background-color: #333;
+            padding: 2px;
+        }
+
+        .cell {
+            background-color: white;
+            border: none;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .cell:hover {
+            background-color: #f0f0f0;
+        }
+
+        .cell:disabled {
+            cursor: not-allowed;
+        }
+
+        .game-info {
+            margin-top: 1rem;
+        }
+
+        .status {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .reset-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .reset-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .winner {
+            color: #28a745;
+        }
+
+        .draw {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Tic Tac Toe</h1>
+        <div class="game-board" id="gameBoard">
+            <button class="cell" data-index="0"></button>
+            <button class="cell" data-index="1"></button>
+            <button class="cell" data-index="2"></button>
+            <button class="cell" data-index="3"></button>
+            <button class="cell" data-index="4"></button>
+            <button class="cell" data-index="5"></button>
+            <button class="cell" data-index="6"></button>
+            <button class="cell" data-index="7"></button>
+            <button class="cell" data-index="8"></button>
+        </div>
+        <div class="game-info">
+            <div class="status" id="gameStatus">Player X's turn</div>
+            <button class="reset-btn" id="resetBtn">Reset Game</button>
+        </div>
+    </div>
+
+    <script>
+        class TicTacToe {
+            constructor() {
+                this.board = Array(9).fill('');
+                this.currentPlayer = 'X';
+                this.gameActive = true;
+                this.cells = document.querySelectorAll('.cell');
+                this.statusElement = document.getElementById('gameStatus');
+                this.resetBtn = document.getElementById('resetBtn');
+
+                this.winningConditions = [
+                    [0, 1, 2],
+                    [3, 4, 5],
+                    [6, 7, 8],
+                    [0, 3, 6],
+                    [1, 4, 7],
+                    [2, 5, 8],
+                    [0, 4, 8],
+                    [2, 4, 6]
+                ];
+
+                this.initializeGame();
+            }
+
+            initializeGame() {
+                this.cells.forEach((cell, index) => {
+                    cell.addEventListener('click', () => this.handleCellClick(index));
+                });
+
+                this.resetBtn.addEventListener('click', () => this.resetGame());
+                this.updateStatus(`Player ${this.currentPlayer}'s turn`);
+            }
+
+            handleCellClick(index) {
+                if (this.board[index] !== '' || !this.gameActive) {
+                    return;
+                }
+
+                this.board[index] = this.currentPlayer;
+                this.cells[index].textContent = this.currentPlayer;
+                this.cells[index].disabled = true;
+
+                if (this.checkWinner()) {
+                    this.gameActive = false;
+                    this.updateStatus(`Player ${this.currentPlayer} wins!`, 'winner');
+                    this.disableAllCells();
+                } else if (this.board.every(cell => cell !== '')) {
+                    this.gameActive = false;
+                    this.updateStatus("It's a draw!", 'draw');
+                } else {
+                    this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
+                    this.updateStatus(`Player ${this.currentPlayer}'s turn`);
+                }
+            }
+
+            checkWinner() {
+                return this.winningConditions.some(condition => {
+                    const [a, b, c] = condition;
+                    return this.board[a] &&
+                           this.board[a] === this.board[b] &&
+                           this.board[a] === this.board[c];
+                });
+            }
+
+            disableAllCells() {
+                this.cells.forEach(cell => {
+                    cell.disabled = true;
+                });
+            }
+
+            updateStatus(message, className = '') {
+                this.statusElement.textContent = message;
+                this.statusElement.className = `status ${className}`;
+            }
+
+            resetGame() {
+                this.board = Array(9).fill('');
+                this.currentPlayer = 'X';
+                this.gameActive = true;
+
+                this.cells.forEach(cell => {
+                    cell.textContent = '';
+                    cell.disabled = false;
+                });
+
+                this.updateStatus(`Player ${this.currentPlayer}'s turn`);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new TicTacToe();
+        });
+    </script>
+</body>
+</html>
