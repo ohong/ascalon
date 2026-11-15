@@ -62,7 +62,7 @@ export default function Home() {
       all.push(...data);
       if (data.length < 1000) break;
     }
-    if (user.current === owner) setEntries(all);
+    if (user.current === owner) setEntries([...new Map(all.map(entry => [entry.id, entry])).values()]);
   }
 
   const owner = session?.user.id;
