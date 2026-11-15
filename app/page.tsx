@@ -39,10 +39,13 @@ export default function Home() {
       if (!changed) update(data.session);
       if (active && error) setAuthError(error.message);
     });
+    let shown = "";
     const refreshDate = () => {
+      const before = shown;
       const next = localToday();
+      shown = next;
       setToday(next);
-      setDate(previous => previous || next);
+      setDate(previous => !previous || previous === before ? next : previous);
     };
     refreshDate();
     window.addEventListener("focus", refreshDate);
