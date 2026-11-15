@@ -8,9 +8,16 @@ Track the words you write each day.
 - Daily word counts and optional notes
 - Writing heatmap, streaks, stats, and history
 
+## How it works
+
+- Each entry is a word count for a date. Entries for the same date add up, and entries cannot be edited or deleted.
+- Heatmap levels by words in a day: none, under 500, 500-999, 1,000-1,999, 2,000+.
+- Writing days counts dates with an entry. The current streak runs back from today, or from yesterday until you log today.
+- The browser talks to Supabase directly with the publishable key. Row-level security in `supabase/migrations` is the only access control: each account reads and inserts its own entries.
+
 ## Stack
 
-Next.js, Supabase, and Vercel.
+Next.js, Supabase, and Vercel. Set `NEXT_PUBLIC_COMMIT_SHA` at build time to show the deployed commit in the `ascalon-version` meta tag.
 
 ## Local setup
 
