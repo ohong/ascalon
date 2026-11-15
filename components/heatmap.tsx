@@ -9,7 +9,7 @@ export function Heatmap({ entries, today }: { entries: Entry[]; today: string })
   return (
     <section aria-label="Writing activity" className="space-y-3">
       <h2 className="text-sm font-medium">Activity</h2>
-      <div data-testid="heatmap" className="flex justify-end overflow-hidden">
+      <div data-testid="heatmap" className="flex flex-row-reverse overflow-x-auto">
         <div className="grid shrink-0 grid-flow-col grid-rows-7 gap-[3px]">
           {Array.from({ length: 53 * 7 }, (_, index) => {
             const day = start + index;

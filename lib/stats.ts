@@ -5,7 +5,6 @@ export type Entry = {
   date: string;
   word_count: number;
   description: string | null;
-  created_at: string;
 };
 
 export function dateTotals(entries: Entry[]) {
