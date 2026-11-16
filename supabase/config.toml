@@ -1,0 +1,7 @@
+project_id = "ascalon-core"
+
+[auth]
+site_url = "http://127.0.0.1:3000"
+
+[auth.email]
+enable_confirmations = false
